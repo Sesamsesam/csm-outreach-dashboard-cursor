@@ -87,7 +87,7 @@ In **Cursor Settings -> "Approvals & Execution for commands, MCP and more"**:
    ```
    That means "all tools from the server named `playwright`" (the name set in `.cursor/mcp.json`). It covers `browser_navigate`, `browser_evaluate`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_type`, `browser_wait_for`, etc., so every browser step in the scraper and enrichment runs automatically.
 4. **External-File Protection** -> leave **ON** (cover letters are written inside the workspace, so this won't interfere). **File-Deletion Protection** -> OFF is fine (enrichment's zero-contact cleanup is an in-file row delete via the helper script, not a file deletion, so this toggle doesn't affect it).
-5. **Command Allowlist** -> add these commands so the skills' Python helper scripts and file ops run without prompting (this is the fix for the approval cards that appear during enrichment when only `cd`/`git push` are allowlisted):
+5. **Command Allowlist** -> add these commands so the skills' Python helper scripts, file ops, **and the setup steps themselves** run without prompting:
    ```
    python3
    python
@@ -95,8 +95,20 @@ In **Cursor Settings -> "Approvals & Execution for commands, MCP and more"**:
    mkdir
    cat
    ls
+   cp
+   pip3
+   pip
+   bash
+   node
+   git clone
+   chmod
+   which
+   open
    ```
-   The scraper and enrichment skills save their results by calling `python3 .../append_jobs.py` and `python3 .../update_contacts.py`, plus `rm`/`cat`/`mkdir`/`ls` for misc file ops. Without these in the Command Allowlist, every one of those shell calls prompts for approval - that is the "several approvals during enrichment" you may have seen. (The browser calls are covered by `playwright:*` in step 3; this step covers the shell calls.)
+   - **Skills** use `python3 .../append_jobs.py` and `python3 .../update_contacts.py` to save results, plus `rm`/`cat`/`mkdir`/`ls` - without these, every save during enrichment prompts (the "several approvals during enrichment" you may have seen).
+   - **Setup** uses `cp` (create `search_config.json`), `pip3`/`pip` (Flask install), `bash` (start dashboard - or use `python3 dashboard/app.py`), `node` (version check), `git clone` (clone the repo), `chmod` (helper exec-bit fallback), `which` (npx PATH troubleshooting), `open` (macOS helper launch).
+   - You do **not** need `npx`/`npm` here - Cursor launches the Playwright MCP server internally, not via the agent's shell.
+   - (The browser calls are covered by `playwright:*` in step 3; this step covers the shell calls.)
 
 That's the per-use, surgical setup: the browser tool and the skills' shell scripts run approval-free; other shell commands, file writes, and other MCP servers stay sandboxed and guarded.
 

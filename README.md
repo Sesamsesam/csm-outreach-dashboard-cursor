@@ -22,7 +22,7 @@ That's it. The agent clones the repo onto your machine (into your `Documents` fo
 
 1. Checks and installs prerequisites (Python, Flask, Node.js for the browser tool).
 2. Starts a separate Chrome instance with a debug port (one-click helper script - your normal Chrome is untouched) and connects the **Playwright MCP** browser server to it via `.cursor/mcp.json` - so the agent drives your real Chrome fingerprint, not a detectable automation browser. Includes a one-time Cursor restart so the server registers.
-3. Configures Cursor's approvals so the skills run without you approving every step - it adds `playwright:*` to the MCP allowlist (browser) and `python3`/`python`/`rm`/`mkdir`/`cat`/`ls` to the Command Allowlist (the skills' helper scripts), with Run Mode = Allowlist with Sandbox and Browser Protection OFF. This keeps the guardrail for everything else and only turns off approvals for what the two skills actually do.
+3. Configures Cursor's approvals so the skills run without you approving every step - it adds `playwright:*` to the MCP allowlist (browser) and the skill/setup shell commands (`python3`, `python`, `rm`, `mkdir`, `cat`, `ls`, `cp`, `pip3`, `bash`, `node`, `git clone`, etc.) to the Command Allowlist, with Run Mode = Allowlist with Sandbox and Browser Protection OFF. This keeps the guardrail for everything else and only turns off approvals for what the two skills and setup actually do.
 4. Creates your empty `csm_jobs.csv` from `schema.py`.
 5. Opens LinkedIn in that dedicated Chrome so you can log in (one time - the session persists in that profile).
 6. Saves your name/email for cover letters.
@@ -117,7 +117,7 @@ Navigation and filtering, job cards (grid view), a job detail page with color-co
 - **Google Chrome** installed (the agent drives a dedicated instance of your real Chrome, separate from your daily Chrome).
 - **Playwright MCP** (Microsoft's official browser server) - pre-wired in `.cursor/mcp.json` to connect to that Chrome over CDP; the agent walks you through enabling it. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md). Needs **Node.js 18+**.
 - **A logged-in LinkedIn session** in that dedicated Chrome. The agent opens LinkedIn for you; you log in once and it persists (stored in the dedicated profile).
-- **The approvals allowlists configured** (`playwright:*` in Cursor's MCP allowlist for the browser tool, plus `python3`/`python`/`rm`/`mkdir`/`cat`/`ls` in the Command Allowlist for the skills' helper scripts) so scrapes/enrichment run without you approving every step. The agent walks you through it; see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3.
+- **The approvals allowlists configured** (`playwright:*` in Cursor's MCP allowlist for the browser tool, plus the skill/setup shell commands - `python3`, `python`, `rm`, `mkdir`, `cat`, `ls`, `cp`, `pip3`, `pip`, `bash`, `node`, `git clone`, `chmod`, `which`, `open` - in the Command Allowlist) so scrapes/enrichment and setup run without you approving every step. The agent walks you through it; see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3.
 - **Python 3** and **Flask** (one `pip` install) for the dashboard.
 
 ## Usage
@@ -148,7 +148,7 @@ A daily scrape runs **on your machine** (it drives your logged-in browser and wr
 - **On-demand (simplest).** Open the project and say **"run my daily job search"**.
 - **Cursor Automation (recurring).** A Cursor Automation can fire the same prompt on a schedule; your real Chrome stays logged into LinkedIn.
 
-**Requirements either way:** a logged-in LinkedIn session, the machine awake, someone available if LinkedIn shows a login wall or CAPTCHA (the skills stop and ask), **and the approvals allowlists configured** (`playwright:*` in the MCP allowlist for browser + `python3`/`python`/`rm`/`mkdir`/`cat`/`ls` in the Command Allowlist for the skills' shell scripts - see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3). Without both allowlists, an unattended automation will block on an approval card nobody is there to click - the browser call OR the `python3` save.
+**Requirements either way:** a logged-in LinkedIn session, the machine awake, someone available if LinkedIn shows a login wall or CAPTCHA (the skills stop and ask), **and the approvals allowlists configured** (`playwright:*` in the MCP allowlist for browser + the skill shell commands `python3`/`python`/`rm`/`mkdir`/`cat`/`ls`/`cp` in the Command Allowlist - see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3). Without both allowlists, an unattended automation will block on an approval card nobody is there to click - the browser call OR the `python3` save.
 
 ## Hunter.io (optional)
 
