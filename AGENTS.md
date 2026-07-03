@@ -45,6 +45,28 @@ If the user says anything like "set this up", "get me started", "initialize this
 
 Many users will reach this trigger by **pasting the repo URL into a fresh Cursor Agent chat before they've created any folder or workspace** - e.g. "set up https://github.com/Sesamsesam/csm-outreach-dashboard-cursor for me". That's the expected first-time entry point. Step 0 below handles getting the project onto their machine and open as the workspace; the rest of setup then runs inside it.
 
+> **This file is the single source of truth for setup.** The convention is: user pastes the GitHub clone link + "set this up" -> the agent reads this `AGENTS.md` (Cursor auto-loads it) and follows the steps below **in order, top to bottom, no skipping** -> the result is a fully working scrape + enrichment pipeline that runs with no manual approvals. `README.md` is the human-facing version of the same story. Do not improvise steps or reorder them; each step is idempotent (check-then-act) and tells you exactly what to run, what success looks like, and what to do if it fails.
+
+### Setup checklist (follow in order; do not skip)
+
+End state: the user can say "run my daily job search" and the agent scrapes LinkedIn + enriches the new rows in one flow, with **zero approval cards**.
+
+| # | Detailed-flow step | Done when |
+|---|---|---|
+| 1 | **Step 0** - Clone + open as workspace | `schema.py` visible at the workspace root |
+| 2 | **FIRST** - Check `setup_complete.json` | If it exists, skip to offering a scrape (only re-verify Step 2 + 2b) |
+| 3 | **Step 1** - Prerequisites | Python 3, pip, Flask, **Node.js 18+** all present (install what's missing) |
+| 4 | **Step 2** - Browser tool | Dedicated debug Chrome running, Playwright MCP green/connected |
+| 5 | **Step 2b** - Approvals allowlists | MCP Allowlist `playwright:*` **and** Command Allowlist `python3`/`python`/`rm`/`mkdir`/`cat`/`ls`; Browser Protection OFF; Run Mode = Allowlist (with Sandbox). **Both** allowlists - browser AND shell |
+| 6 | **Step 3** - Data file + live config | `csm_jobs.csv` created via `schema.py` **and** `search_config.json` created from the example |
+| 7 | **Step 4** - Skills | `.cursor/skills/` present (auto-loaded, nothing to install) |
+| 8 | **Step 5** - Dashboard | Running in the **background** at http://localhost:5001 |
+| 9 | **Step 6** - LinkedIn login | User logged into LinkedIn in the dedicated Chrome (session persists) |
+| 10 | **Step 7** - Cover-letter identity | `user_profile.txt` saved with the user's name + email |
+| 11 | **Step 9** - Setup-complete marker | `setup_complete.json` written **only after** every step above succeeded |
+
+**Step 8 (Hunter.io) is optional** - skip it on first setup; enrichment works without it (it just won't find executive emails). Do everything else in this order, top to bottom.
+
 ## Step 0 - Get the project onto the machine (run first, before checking setup state)
 
 Decide whether the project is already open on disk:
@@ -105,12 +127,12 @@ This is the one genuinely new prerequisite vs. a plain Python project, and it's 
 
 Walk the user through it in this order:
 
-1. **Start the dedicated Chrome with the debug port.** Run the helper for their OS (double-click on macOS, or run from terminal):
-   - macOS: `./launch-chrome.command`
-   - Windows: `launch-chrome.bat`
-   - Linux: `./launch-chrome.sh`
+1. **Start the dedicated Chrome with the debug port.** The helper opens a GUI Chrome window and ends by waiting for a keypress, so **do not run it directly via the shell tool (it will block)**. Either launch it non-blocking, or ask the user to double-click it:
+   - macOS (non-blocking, opens in a new Terminal window): `open launch-chrome.command` - or tell the user to double-click `launch-chrome.command`.
+   - Windows (non-blocking): `start "" launch-chrome.bat` - or tell the user to double-click `launch-chrome.bat`.
+   - Linux (non-blocking): `./launch-chrome.sh &` - or tell the user to run it in a terminal.
    It opens a **separate Chrome window** with its own profile (`~/.csm-outreach/chrome-profile`) and `--remote-debugging-port=9222`. The user's normal Chrome is untouched. Tell them: **keep this dedicated Chrome running while scraping; close it when done to turn the debug port off.**
-   > **First-run OS warning (one-time):** macOS may show "unidentified developer" - bypass via right-click -> Open -> Open (or run from terminal). Windows may show SmartScreen "Windows protected your PC" - click More info -> Run anyway (and unblock the file in Properties if needed). See `BROWSER_SETUP.md` for full details.
+   > **First-run OS warning (one-time):** macOS may show "unidentified developer" - bypass via right-click -> Open -> Open (or run from terminal). Windows may show SmartScreen "Windows protected your PC" - click More info -> Run anyway (and unblock the file in Properties if needed). See `BROWSER_SETUP.md` for full details. (The helper scripts ship with the executable bit set in the repo, so a fresh clone does not need `chmod +x`; if a "permission denied" still appears, run `chmod +x launch-chrome.command launch-chrome.sh`.)
 2. Tell the user: open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command). They should see a **playwright** server listed (from `.cursor/mcp.json`, configured with `--cdp-endpoint http://127.0.0.1:9222`).
 3. If it's not enabled, have them click **Enable** / toggle it on. Cursor runs `npx -y @playwright/mcp@latest --cdp-endpoint http://127.0.0.1:9222`; the first launch downloads the package (needs Node 18+, checked in Step 1) and connects to the dedicated Chrome.
 4. **Restart Cursor** if the server was just added or its args changed - MCP servers load at startup, not on file save.
@@ -128,25 +150,46 @@ If the user is not going to scrape right now (they only want the dashboard), you
 
 ### Step 2b - Configure approvals so scrapes/enrichment run without manual approval cards
 
-This is required for the skills to run end-to-end without the user approving every browser step. By default, Cursor's approvals/classifier interrupts every browser action, and it specifically flags LinkedIn profile-data extraction (the core of enrichment) as "third-party data collection" - so out of the box a scrape/enrichment stops repeatedly for approval. The fix is to **allowlist the Playwright MCP server**, which turns off approvals only for the browser tool and leaves the rest of the agent guarded.
+This is required for the skills to run end-to-end without the user approving every step. There are **two** separate allowlists to set, both in the same panel: one for the **browser** tool, one for the **shell** commands the skills use. A lesser model must set BOTH - setting only the browser one leaves the user approving every `python3` helper-script call during enrichment.
 
-Walk the user through it in **Cursor Settings -> "Approvals & Execution for commands, MCP and more"**:
+By default, Cursor's approvals/classifier interrupts every browser action (and specifically flags LinkedIn profile-data extraction - the core of enrichment - as "third-party data collection"), and it prompts for every shell command not on the Command Allowlist. The fix: allowlist the Playwright MCP server and the skill shell commands. This turns off approvals only for what these two skills do and leaves the rest of the agent guarded.
 
-1. **Run Mode** -> **Allowlist (with Sandbox)**. (Not "Auto-review outside the sandbox" - that increases prompts, it doesn't remove them.)
-2. **Browser Protection** -> **OFF** (if ON, it overrides the allowlist and forces approval on every browser call).
+Walk the user through it in **Cursor Settings -> "Approvals & Execution for commands, MCP and more"**. Tell them each exact value to set:
+
+1. **Run Mode** -> **Allowlist (with Sandbox)**. (Not "Auto-review outside the sandbox" / "no sandbox" - that *increases* prompts, it does not remove them.)
+2. **Browser Protection** -> **OFF** (if ON, it overrides the MCP allowlist and forces approval on every browser call).
 3. **MCP Allowlist** -> add `playwright:*` (all tools from the `playwright` server). If that name isn't recognized, try `project-0-csm-outreach-dashboard-cursor-playwright:*`; last resort `*:*`.
 4. **External-File Protection** -> leave ON (cover letters are in-workspace). **File-Deletion Protection** -> OFF is fine.
+5. **Command Allowlist** -> add these exact commands (the skills call `python3 .../append_jobs.py` and `python3 .../update_contacts.py` to save results, plus `rm`/`cat`/`mkdir`/`ls` for misc file ops - without these, every save during enrichment prompts):
+   ```
+   python3
+   python
+   rm
+   mkdir
+   cat
+   ls
+   ```
 
-No restart needed - the change is live immediately. Verify by driving any `browser_navigate`; it should run with no approval card. Full details in `BROWSER_SETUP.md` section 3.
+No restart needed - the change is live immediately. Verify by driving any `browser_navigate` (no approval card) and running `python3 -c "print(1)"` (no approval card). Full details in `BROWSER_SETUP.md` section 3.
 
 > **Do not use "undetected" / anti-detection language when running the skills.** Cursor's classifier treats scraping-plus-anti-detection wording as evasion and blocks the run even with the allowlist in place. You don't need it: the CDP-to-real-Chrome hybrid (Step 2) already drives the user's genuine Chrome fingerprint - real plugins, WebGL, TLS, no `navigator.webdriver` - which is the real detection-risk reduction. Run a normal scrape/enrichment ("run my daily job search") and let the hybrid handle stealth.
+>
+> **Blunt alternative (zero prompts for everything):** if the user would rather not add individual allowlist entries, switch Run Mode to the fully-automatic "Auto" option (no classifier). This auto-approves every browser and shell action - but removes the guardrail for all agent actions, not just the skills. Use only if the surgical allowlist above is too much friction.
 
-### Step 3 - Create the one data file
+### Step 3 - Create the one data file and the live config
+
+Create the empty CSV (the single data file) and the live search config:
 ```bash
-python3 schema.py        # macOS/Linux
+python3 schema.py        # macOS/Linux - creates empty csm_jobs.csv with the correct columns
 python schema.py         # Windows
 ```
-This creates an empty `csm_jobs.csv` with the correct columns (from `schema.py`). It will not overwrite an existing file.
+`schema.py` will **not** overwrite an existing `csm_jobs.csv`.
+
+Then create the live search config from the shipped default (a fresh clone has only `search_config.example.json`; the skills fall back to it, but the live file must exist for the dashboard's settings panel and for any later retargeting):
+```bash
+test -f search_config.json || cp search_config.example.json search_config.json
+```
+This is a no-op if `search_config.json` already exists (idempotent). The live file is gitignored, so personal targeting never ships.
 
 ### Step 4 - Skills (no install needed)
 
@@ -157,19 +200,21 @@ The two skills live in `.cursor/skills/` and **auto-load** when the project is o
 Both are invocable via `/skill-name` in chat, or the agent picks them automatically based on the request.
 
 ### Step 5 - Start the dashboard
+
+The dashboard is a **long-running Flask server** - it must run in the **background** so it doesn't block setup. Start it as a background process (do NOT run it foreground or the agent will hang):
 ```bash
-bash dashboard/run.sh       # macOS/Linux
-dashboard\run.bat            # Windows
-# or cross-platform:
+bash dashboard/run.sh       # macOS/Linux - run this in the background (long-running server)
+dashboard\run.bat            # Windows - run in the background
+# or cross-platform, also in the background:
 python3 dashboard/app.py
 ```
-Then tell the user to open **http://localhost:5001** in their browser.
+Then tell the user to open **http://localhost:5001** in their browser. Confirm the server started by checking the background process's first output lines mention "Running on http://127.0.0.1:5001" (or similar). `run.sh` also installs Flask on first run, so Step 1's Flask check is a backstop - if Flask was missing, `run.sh` installs it.
 
 ### Step 6 - Log into LinkedIn (required before scraping/enriching)
 
 The skills can't read LinkedIn without a logged-in session. Because the CDP hybrid uses a **dedicated Chrome profile** (`~/.csm-outreach/chrome-profile`, separate from the user's daily Chrome), the user logs into LinkedIn once in that dedicated profile:
 1. Make sure the dedicated debug Chrome is running (run `launch-chrome.command` / `.bat` / `.sh` from Step 2).
-2. Ask you to open LinkedIn in that Chrome (you call `browser_navigate` to `https://www.linkedin.com`) - or they just open it themselves in that dedicated Chrome window.
+2. Have the agent open LinkedIn in that Chrome (call `browser_navigate` to `https://www.linkedin.com`) - or the user just opens it themselves in that dedicated Chrome window.
 3. The user logs into LinkedIn manually (username, password, 2FA).
 4. Once they confirm they're signed in, you're done - the session persists in the dedicated profile across future runs.
 
@@ -198,7 +243,7 @@ Create `setup_complete.json` in the project root so a later session skips setup.
   "set_up_by": "Cursor",
   "timestamp": "2026-07-03T00:00:00Z",
   "install_path": "/absolute/path/to/csm-outreach-dashboard-cursor",
-  "steps_completed": ["prerequisites_verified", "playwright_mcp_connected", "approvals_configured", "csv_created", "linkedin_logged_in", "profile_saved", "dashboard_tested"]
+  "steps_completed": ["prerequisites_verified", "playwright_mcp_connected", "approvals_configured", "csv_created", "search_config_created", "linkedin_logged_in", "profile_saved", "dashboard_tested"]
 }
 ```
 This file is gitignored, so it never ships in the repo - a fresh clone correctly has no marker and runs setup.
