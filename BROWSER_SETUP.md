@@ -87,23 +87,9 @@ In **Cursor Settings -> Agents** (open Settings, click **Agents**, scroll down t
    ```
    That means "all tools from the server named `playwright`" (the name set in `.cursor/mcp.json`). It covers `browser_navigate`, `browser_evaluate`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_type`, `browser_wait_for`, etc., so every browser step in the scraper and enrichment runs automatically.
 4. **External-File Protection** -> leave **ON** (cover letters are written inside the workspace, so this won't interfere). **File-Deletion Protection** -> OFF is fine (enrichment's zero-contact cleanup is an in-file row delete via the helper script, not a file deletion, so this toggle doesn't affect it).
-5. **Command Allowlist** -> add these commands so the skills' Python helper scripts, file ops, **and the setup steps themselves** run without prompting:
+5. **Command Allowlist** -> add these commands so the skills' Python helper scripts, file ops, **and the setup steps themselves** run without prompting (copy-paste this whole comma-delimited line into the field):
    ```
-   python3
-   python
-   rm
-   mkdir
-   cat
-   ls
-   cp
-   pip3
-   pip
-   bash
-   node
-   git clone
-   chmod
-   which
-   open
+   python3, python, rm, mkdir, cat, ls, cp, pip3, pip, bash, node, git clone, chmod, which, open
    ```
    - **Skills** use `python3 .../append_jobs.py` and `python3 .../update_contacts.py` to save results, plus `rm`/`cat`/`mkdir`/`ls` - without these, every save during enrichment prompts (the "several approvals during enrichment" you may have seen).
    - **Setup** uses `cp` (create `search_config.json`), `pip3`/`pip` (Flask install), `bash` (start dashboard - or use `python3 dashboard/app.py`), `node` (version check), `git clone` (clone the repo), `chmod` (helper exec-bit fallback), `which` (npx PATH troubleshooting), `open` (macOS helper launch).

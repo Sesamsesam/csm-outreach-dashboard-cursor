@@ -57,7 +57,7 @@ End state: the user can say "run my daily job search" and the agent scrapes Link
 | 2 | **FIRST** - Check `setup_complete.json` | If it exists, skip to offering a scrape (only re-verify Step 2 + 2b) |
 | 3 | **Step 1** - Prerequisites | Python 3, pip, Flask, **Node.js 18+** all present (install what's missing) |
 | 4 | **Step 2** - Browser tool | Dedicated debug Chrome running, Playwright MCP green/connected |
-| 5 | **Step 2b** - Approvals allowlists | MCP Allowlist `playwright:*` (browser) **and** Command Allowlist `python3`/`python`/`rm`/`mkdir`/`cat`/`ls`/`cp`/`pip3`/`pip`/`bash`/`node`/`git clone`/`chmod`/`which`/`open` (skills + setup); Browser Protection OFF; Run Mode = Allowlist (with Sandbox). **Both** allowlists - browser AND shell |
+| 5 | **Step 2b** - Approvals allowlists | MCP Allowlist `playwright:*` (browser) **and** Command Allowlist (paste this comma-delimited line: `python3, python, rm, mkdir, cat, ls, cp, pip3, pip, bash, node, git clone, chmod, which, open`); Browser Protection OFF; Run Mode = Allowlist (with Sandbox). **Both** allowlists - browser AND shell |
 | 6 | **Step 3** - Data file + live config | `csm_jobs.csv` created via `schema.py` **and** `search_config.json` created from the example |
 | 7 | **Step 4** - Skills | `.cursor/skills/` present (auto-loaded, nothing to install) |
 | 8 | **Step 5** - Dashboard | Running in the **background** at http://localhost:5001 |
@@ -160,27 +160,14 @@ Walk the user through it in **Cursor Settings -> Agents** (open Settings, click 
 2. **Browser Protection** -> **OFF** (if ON, it overrides the MCP allowlist and forces approval on every browser call).
 3. **MCP Allowlist** -> add `playwright:*` (all tools from the `playwright` server). If that name isn't recognized, try `project-0-csm-outreach-dashboard-cursor-playwright:*`; last resort `*:*`.
 4. **External-File Protection** -> leave ON (cover letters are in-workspace). **File-Deletion Protection** -> OFF is fine.
-5. **Command Allowlist** -> add these exact commands. The first block is what the **skills** call to save results (without these, every save during enrichment prompts); the second block is what the **setup steps** call (without these, onboarding itself prompts). Add both:
+5. **Command Allowlist** -> add these commands (copy-paste this whole comma-delimited line into the field - the skills' Python helper scripts, file ops, **and the setup steps** all run without prompting):
    ```
-   python3
-   python
-   rm
-   mkdir
-   cat
-   ls
-   cp
-   pip3
-   pip
-   bash
-   node
-   git clone
-   chmod
-   which
-   open
+   python3, python, rm, mkdir, cat, ls, cp, pip3, pip, bash, node, git clone, chmod, which, open
    ```
-   - Skills use: `python3 .../append_jobs.py`, `python3 .../update_contacts.py`, `rm`, `cat`, `mkdir`, `ls`.
-   - Setup uses: `cp` (Step 3 config), `pip3`/`pip` (Step 1 Flask install + `run.sh`), `bash` (Step 5 dashboard - or use `python3 dashboard/app.py` instead), `node` (Step 1 version check), `git clone` (Step 0), `chmod` (Step 2 fallback), `which` (Step 2 troubleshooting), `open` (Step 2 macOS helper launch).
+   - **Skills** use `python3 .../append_jobs.py` and `python3 .../update_contacts.py` to save results, plus `rm`/`cat`/`mkdir`/`ls` - without these, every save during enrichment prompts (the "several approvals during enrichment" you may have seen).
+   - **Setup** uses `cp` (create `search_config.json`), `pip3`/`pip` (Flask install), `bash` (start dashboard - or use `python3 dashboard/app.py`), `node` (version check), `git clone` (clone the repo), `chmod` (helper exec-bit fallback), `which` (npx PATH troubleshooting), `open` (macOS helper launch).
    - You do **not** need `npx`/`npm` here - Cursor launches the Playwright MCP server internally, not via the agent's shell.
+   - (The browser calls are covered by `playwright:*` in step 3; this step covers the shell calls.)
 
 No restart needed - the change is live immediately. Verify by driving any `browser_navigate` (no approval card) and running `python3 -c "print(1)"` (no approval card). Full details in `BROWSER_SETUP.md` section 3.
 
