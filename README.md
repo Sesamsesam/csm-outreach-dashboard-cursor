@@ -8,21 +8,32 @@ This is the **Cursor** edition. It uses [Playwright MCP](https://github.com/micr
 
 ## Quick start (with Cursor)
 
-You don't need to do anything manually. Clone the repo, open it in Cursor, and tell the agent:
+### First time? You don't even need to create a folder.
+
+If you just installed Cursor, do this:
+
+1. **Open Cursor.** You can start from an empty window - no workspace or folder needed.
+2. **Open Agent chat** (the right-hand panel, or `Cmd+I` / `Ctrl+I`) and make sure it's set to **Agent** mode (not Ask).
+3. **Paste this:**
 
 > **Set up https://github.com/Sesamsesam/csm-outreach-dashboard-cursor for me**
 
-The agent will:
-1. Check and install prerequisites (Python, Flask, Node.js for the browser tool).
-2. Connect the **Playwright MCP** browser server (already wired in `.cursor/mcp.json`) and walk you through enabling it.
-3. Create your empty `csm_jobs.csv` from `schema.py`.
-4. Open LinkedIn in the browser so you can log in (one time - the session persists).
-5. Save your name/email for cover letters.
-6. Start the dashboard at **http://localhost:5001**.
+That's it. The agent clones the repo onto your machine (into your `Documents` folder by default, or wherever you tell it), opens it as the workspace, and then:
+
+1. Checks and installs prerequisites (Python, Flask, Node.js for the browser tool).
+2. Connects the **Playwright MCP** browser server (already wired in `.cursor/mcp.json`) and walks you through enabling it - including a one-time Cursor restart so it registers.
+3. Creates your empty `csm_jobs.csv` from `schema.py`.
+4. Opens LinkedIn in the browser so you can log in (one time - the session persists).
+5. Saves your name/email for cover letters.
+6. Starts the dashboard at **http://localhost:5001**.
+
+You'll be asked to take a few physical actions along the way (approve the MCP server, restart Cursor once, log into LinkedIn). Everything else the agent does for you.
 
 The two skills auto-load from `.cursor/skills/` - no install step. After setup, just say **"run my daily job search"** and the agent scrapes LinkedIn and enriches the new rows in one flow.
 
-> **Not a video person?** The agent guides you through every install step in chat, including the browser tool. You don't need to follow a separate tutorial. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md) if you'd rather do the browser-tool install yourself.
+> **Already cloned it yourself?** Open the folder in Cursor (`File -> Open Folder`), then paste the same setup line above. The agent sees the project is already there and skips the clone step.
+
+> **No video tutorial needed.** The agent guides you through every install step in chat, including the browser tool. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md) if you'd rather do the browser-tool install yourself.
 
 ---
 

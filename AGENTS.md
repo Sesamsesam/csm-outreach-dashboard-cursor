@@ -32,6 +32,22 @@ If the `browser_*` tools are not available during a run, the skills will detect 
 
 If the user says anything like "set this up", "get me started", "initialize this", or "install this" - run the setup steps below in order. This is the intended onboarding phrase for new users. The user may be non-technical - do not tell them to open a terminal or run commands themselves. Run everything you can yourself; only ask them to take a physical action when a step requires it (clicking a button in a dialog, logging into LinkedIn, approving an MCP server).
 
+Many users will reach this trigger by **pasting the repo URL into a fresh Cursor Agent chat before they've created any folder or workspace** - e.g. "set up https://github.com/Sesamsesam/csm-outreach-dashboard-cursor for me". That's the expected first-time entry point. Step 0 below handles getting the project onto their machine and open as the workspace; the rest of setup then runs inside it.
+
+## Step 0 - Get the project onto the machine (run first, before checking setup state)
+
+Decide whether the project is already open on disk:
+
+1. **Are we already inside the project?** Check for `schema.py` in the current workspace root. If it's there, the project is already cloned and open - skip to **FIRST: check if setup is already complete** below.
+2. **If not, and the user gave a GitHub URL** (e.g. `https://github.com/Sesamsesam/csm-outreach-dashboard-cursor`), clone it for them:
+   - **Check `git` is installed:** `git --version 2>/dev/null`. If missing, install it (macOS: it'll prompt to install Command Line Tools; Windows: `winget install Git.Git` or tell them to install from https://git-scm.com/download/win).
+   - **Pick a generic default location** - never a user-specific path. Use `~/Documents/csm-outreach-dashboard-cursor` (that's `$HOME/Documents/...` on macOS/Linux, `%USERPROFILE%\Documents\...` on Windows). Tell the user: "I'll put the project in your Documents folder. Say the word if you'd prefer somewhere else." If they name a different folder, use it. Create the parent directory if it doesn't exist (`mkdir -p`).
+   - **Clone:** `git clone https://github.com/Sesamsesam/csm-outreach-dashboard-cursor "<chosen path>"`. If the target folder already exists and isn't empty, stop and ask the user how to proceed rather than overwriting.
+   - **Open it as the workspace.** Use the `move_agent_to_root` tool to move this conversation's root to the cloned folder, so all subsequent steps run in-project. (If that tool isn't available, tell the user: "Open the folder I just cloned in Cursor - File -> Open Folder -> `<chosen path>` - then say 'continue'.") 
+3. **After the project is open as the workspace root, the Playwright MCP server (`.cursor/mcp.json`) needs to register.** Cursor loads MCP servers at startup from the workspace root, so tell the user: **"Restart Cursor once so the playwright browser server loads, then come back and say 'continue'."** This only matters on the very first setup - after the restart, the `browser_*` tools will be available for Step 2.
+
+Once the project is on disk and open as the workspace root, continue to **FIRST: check if setup is already complete**.
+
 ## FIRST: check if setup is already complete
 
 **Before running ANY setup step, check for a `setup_complete.json` file in the project root.**
