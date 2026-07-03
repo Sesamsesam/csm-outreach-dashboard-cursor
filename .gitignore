@@ -32,3 +32,10 @@ __pycache__/
 
 # Cursor local/personal settings (the committed .cursor/mcp.json is shared)
 .cursor/settings.local.json
+
+# Playwright MCP runtime artifacts: page snapshots (*.yml) and captured browser
+# console logs (*.log). The MCP server writes these every run to .playwright-mcp/
+# in the project root. They are pure noise (console output from the sites being
+# browsed - LinkedIn/Google warnings, tracking-pixel errors, etc.), can balloon to
+# thousands of lines while the browser is open, and have no value to commit.
+.playwright-mcp/
