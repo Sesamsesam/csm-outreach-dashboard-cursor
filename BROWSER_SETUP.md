@@ -15,6 +15,8 @@ Playwright MCP runs through `npx`, which needs Node.js 18 or newer.
 
 ## 2. Enable the Playwright MCP server in Cursor
 
+> **It is NOT in Cursor's MCP marketplace.** Searching "Playwright" or "browser" in Customize -> MCP market will find nothing - that's expected. Playwright MCP is added through the project config file, the one-click install button, or the manual "Add new MCP Server" flow below - not the marketplace. Don't waste time looking for it in the market.
+
 This repo ships `.cursor/mcp.json` already configured:
 
 ```json
@@ -73,7 +75,10 @@ Playwright MCP keeps a persistent profile per project:
 
 ## 4. Troubleshooting
 
-- **No `browser_*` tools show up.** Make sure you're in Cursor's **Agent** mode (not Chat). Confirm the playwright server is green in Settings -> Tools & MCP. Restart Cursor if it was just added. Verify `node --version` is 18+.
+- **The playwright server isn't in the MCP marketplace.** Correct - it isn't a marketplace listing. Use the project's `.cursor/mcp.json` (open the project folder and it appears in Settings -> Tools & MCP), or the **one-click install button** at https://github.com/microsoft/playwright-mcp (Cursor section), or add it manually (Settings -> Tools & MCP -> Add new MCP Server -> Name `playwright`, Type `command`, Command `npx -y @playwright/mcp@latest`).
+- **No `browser_*` tools show up.** Make sure you're in Cursor's **Agent** mode (not Chat). Confirm the playwright server is green in Settings -> Tools & MCP. **Restart Cursor** if it was just added - MCP servers load at startup, not on file save. Verify `node --version` is 18+.
+- **Server shows red / "command not found" / won't connect (the #1 cause).** Cursor launched from the Dock/Applications does **not** inherit your shell PATH, so it can't find `npx` - even though your terminal can. This is especially common when Node was installed via Homebrew (`/opt/homebrew/bin`), nvm, fnm, or asdf. Fix: use the **absolute path** to npx. Run `which npx` in a terminal, then set that full path as `command` in the MCP config. For example, on Apple-silicon Homebrew: `"command": "/opt/homebrew/bin/npx"`. Put this in your **global** `~/.cursor/mcp.json` (user-specific, not committed) so it applies everywhere without touching the repo's generic config. Alternatively, launch Cursor from the terminal so it inherits your PATH.
+- **`-y` flag missing -> server hangs forever.** Cursor launches `npx` non-interactively; without `-y`, npx waits for an install confirmation that never arrives. The shipped config already includes `-y` (`["-y", "@playwright/mcp@latest"]`) - keep it.
 - **`npx` fails / can't download.** Check Node is installed and on PATH. If you're behind a corporate proxy, set `HTTPS_PROXY` before launching Cursor. Alternatively run the server via Docker: in `.cursor/mcp.json` use `"command": "docker", "args": ["run", "-i", "--rm", "--init", "--pull=always", "mcr.microsoft.com/playwright/mcp"]` (note: Docker image is headless chromium only).
 - **Login doesn't persist.** Confirm you're not passing `--isolated` in the args (the shipped config doesn't). The persistent profile is the default. If you have multiple Cursor windows open on the same project, only one can hold the profile - close the others.
 - **LinkedIn shows a login wall mid-scrape.** The skill stops and asks you to log in again. Re-open LinkedIn in the Playwright MCP browser (step 3 above), log in, then tell the agent to continue.

@@ -90,10 +90,13 @@ Only after ALL prerequisites pass, continue to Step 2. If Node is the only missi
 
 This is the one genuinely new prerequisite vs. a plain Python project, and it's what makes the LinkedIn scrape work. `.cursor/mcp.json` is already in the repo, so Cursor should auto-prompt to enable the server. Walk the user through it:
 
+> **Important: Playwright MCP is NOT in Cursor's MCP marketplace.** If the user says they searched the marketplace (Customize -> MCP market) for "Playwright" or "browser" and found nothing, that is expected - it isn't a marketplace listing. It comes in through the project's `.cursor/mcp.json` (below), the one-click install button at https://github.com/microsoft/playwright-mcp (Cursor section), or Settings -> Tools & MCP -> Add new MCP Server. Tell them not to bother searching the market.
+
 1. Tell the user: open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command). They should see a **playwright** server listed (from `.cursor/mcp.json`).
 2. If it's not enabled, have them click **Enable** / toggle it on. Cursor will run `npx -y @playwright/mcp@latest`; the first launch downloads the package (this needs Node 18+, checked in Step 1).
-3. Confirm the server turns **green/connected** in that panel.
-4. Verify from the agent side: try calling `browser_navigate` to `https://example.com` and `browser_evaluate` with `() => document.title`. If those work, the browser tool is live. If the tools aren't available at all, see `BROWSER_SETUP.md` for the manual install path and troubleshooting, and walk the user through it.
+3. Confirm the server turns **green/connected** in that panel. **If it stays red / shows "command not found" / never connects, that is almost always Cursor not finding `npx` on its PATH** - GUI-launched Cursor does not inherit the shell PATH (common with Homebrew `/opt/homebrew/bin`, nvm, fnm, asdf). Fix: run `which npx` in a terminal, then put that absolute path as `command` in the user's **global** `~/.cursor/mcp.json` (e.g. `"command": "/opt/homebrew/bin/npx"` on Apple-silicon Homebrew) - keep the repo's `.cursor/mcp.json` generic. Or launch Cursor from the terminal so it inherits PATH. See `BROWSER_SETUP.md` troubleshooting.
+4. **Restart Cursor** if the server was just added - MCP servers load at startup, not on file save.
+5. Verify from the agent side: try calling `browser_navigate` to `https://example.com` and `browser_evaluate` with `() => document.title`. If those work, the browser tool is live. If the tools aren't available at all, see `BROWSER_SETUP.md` for the manual install path and troubleshooting, and walk the user through it.
 
 > Note: Cursor used to ship a built-in browser tool but removed it for security reasons; Cursor staff recommend Microsoft's official Playwright MCP as the replacement, which is what this project uses. Do not suggest the built-in Browser Tab for scraping - it doesn't keep a persistent logged-in profile the way Playwright MCP does.
 
