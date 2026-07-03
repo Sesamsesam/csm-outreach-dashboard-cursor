@@ -1,0 +1,33 @@
+---
+description: CSM Outreach Dashboard house rules - read first when working in this project
+globs:
+alwaysApply: true
+---
+
+# CSM Outreach Dashboard - house rules (read first)
+
+This is a LinkedIn job-outreach tracker with a local Flask dashboard and two Cursor agent skills (scrape + enrich) that drive a real browser via **Playwright MCP**. It ships tuned for Customer Success Manager roles but is built to be retargeted to any job title. Follow these rules before doing anything else.
+
+## The six rules
+
+1. **Setup is once.** If `setup_complete.json` exists in the project root, setup is already done - do **not** re-run it.
+2. **One data file, ever.** There is exactly one: `csm_jobs.csv` in the project root. Never create a second CSV, never rename it. The column layout is defined once in `schema.py`.
+3. **Targeting lives in `search_config.json`.** To change what's searched/enriched (role, location, filters, contacts, tone), edit `search_config.json` - never hard-code role values into the skills. See `RETARGETING.md`.
+4. **Retargeting is forward-only.** Changing the search never deletes or re-filters existing rows in `csm_jobs.csv` - old jobs stay.
+5. **Users speak casually - recognize settings changes.** The people using this project are not technical and did not build it. They will describe changes in plain language - "search UK", "look for PM jobs", "make the DMs shorter", "only senior roles." If the user says anything that sounds like they want to change where, what, or how the skills search or write outreach, **that is a settings change** - do not run a scrape or enrichment. Confirm what they want, then follow `RETARGETING.md`. See `AGENTS.md` -> "Recognizing a settings change" for examples.
+6. **The browser tool is Playwright MCP.** The skills need the Playwright MCP server connected (configured in `.cursor/mcp.json`). The skills keep a persistent, logged-in LinkedIn profile. If the user has no `browser_*` tools available, tell them to run setup (see `BROWSER_SETUP.md`) before scraping or enriching.
+
+## Formatting rule - no em dashes
+
+Never use em dashes (--) anywhere - not in DMs, cover letters, reports, summaries, or any other output. Always use a regular hyphen (-) instead. This applies across all skills and all generated text, without exception.
+
+## Where things live
+
+- `.cursor/skills/` - the two authoritative skills (auto-loaded by Cursor)
+- `.cursor/mcp.json` - pre-wires the Playwright MCP browser server
+- `AGENTS.md` - full agent guide (setup flow, settings recognition, scheduling)
+- `BROWSER_SETUP.md` - how to install Playwright MCP and log into LinkedIn
+- `RETARGETING.md` - how to change/add search settings (full config reference)
+- `schema.py` - single source of truth for the 38 CSV columns
+- `dashboard/` - the Flask dashboard (port 5001)
+- `search_config.example.json` - shipped CSM defaults (the fallback config)

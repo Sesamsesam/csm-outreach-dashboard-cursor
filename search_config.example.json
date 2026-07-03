@@ -1,0 +1,84 @@
+{
+  "_README": "SINGLE SOURCE OF TRUTH for what the two skills scrape and enrich. This is the SHIPPED DEFAULT (Customer Success Manager). The live, user-edited copy is search_config.json (gitignored). The scraper and enrichment skills load the live config at the START of every run - scheduled or on-demand - and use ONLY these values for every scraping and enrichment decision. To retarget, follow RETARGETING.md, which edits the live search_config.json. Never edit knob values inline in the skills; edit them here.",
+  "last_updated": "2026-06-24",
+  "role_label": "Customer Success Manager",
+  "_filters_note": "exclude_work_permit_required skips a posting only when its description contains a work_permit_block_phrases entry (explicit 'no sponsorship' language); postings that are silent on sponsorship are KEPT. It is a config toggle - set to false to disable. The work_authorization column records what was detected per kept job.",
+
+  "scraper": {
+    "search_keywords": "Customer+Success+Manager",
+    "title_match_phrase": "customer success manager",
+    "location": "United+States",
+    "work_type": "2",
+    "work_type_label": "remote only",
+    "seniority": "2,4",
+    "seniority_label": "entry + mid-senior",
+    "recency": "r86400",
+    "recency_label": "past 24 hours",
+    "pages_to_scrape": 1,
+    "blocklist_companies": ["Swooped", "Ladders", "Jobgether", "Recruit.net", "Jobot", "Nexxt", "Talentify", "Employbl", "Adzuna", "Hirect", "Sci-Rec"],
+    "blocklist_phrases": ["currently partnered with", "we are not the employer", "on behalf of", "our client is", "confidential company"],
+
+    "exclude_work_permit_required": true,
+    "work_permit_label": "skip jobs that explicitly won't sponsor",
+    "work_permit_block_phrases": [
+      "no visa sponsorship",
+      "no sponsorship",
+      "without sponsorship",
+      "do not provide sponsorship",
+      "does not provide sponsorship",
+      "will not provide sponsorship",
+      "not provide sponsorship",
+      "unable to provide sponsorship",
+      "not able to provide sponsorship",
+      "do not offer sponsorship",
+      "does not offer sponsorship",
+      "not offer sponsorship",
+      "unable to offer sponsorship",
+      "cannot offer sponsorship",
+      "do not sponsor",
+      "does not sponsor",
+      "will not sponsor",
+      "cannot sponsor",
+      "unable to sponsor",
+      "not able to sponsor",
+      "sponsorship is not available",
+      "sponsorship will not be provided",
+      "not eligible for sponsorship",
+      "without requiring sponsorship",
+      "without the need for sponsorship",
+      "now or in the future without sponsorship"
+    ],
+    "work_permit_positive_phrases": [
+      "visa sponsorship available",
+      "sponsorship available",
+      "will sponsor",
+      "we sponsor",
+      "open to sponsorship",
+      "sponsorship is available",
+      "we offer sponsorship",
+      "visa sponsorship is available"
+    ]
+  },
+
+  "enrichment": {
+    "num_contacts": 4,
+    "role_function": "Customer Success",
+    "contact_tiers": [
+      { "n": 1, "type": "Recruiter", "who": "Person actively hiring for this role" },
+      { "n": 2, "type": "Hiring Manager", "who": "CS Director / Sr. Director overseeing the team" },
+      { "n": 3, "type": "Peer", "who": "Individual contributor on the same segment team" },
+      { "n": 4, "type": "Senior Business Leader", "who": "GM, VP, CRO, CCO or similar" }
+    ],
+    "recruiter_function_code": "12",
+    "function_code": "26",
+    "manager_title_keywords": "Director Manager Customer Success",
+    "segment_keywords": ["Strategic", "Enterprise", "Commercial", "SMB"],
+    "segment_fallback": "Senior Customer Success",
+    "senior_leader_titles": ["GM", "General Manager", "VP", "SVP", "EVP", "CRO", "CCO", "Chief", "President", "Head of Revenue", "Head of GTM"],
+    "dm_tone": "Warm and peer-to-peer. Reference the specific role and team. No hard sell.",
+    "cover_letter_emphasis": "Customer Success outcomes: retention, relationship management, driving product adoption.",
+    "zero_contact_behavior": "delete"
+  },
+
+  "custom_fields_added": ["work_authorization", "hard_requirements", "years_experience"]
+}
