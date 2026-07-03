@@ -67,6 +67,23 @@ End state: the user can say "run my daily job search" and the agent scrapes Link
 
 **Step 8 (Hunter.io) is optional** - skip it on first setup; enrichment works without it (it just won't find executive emails). Do everything else in this order, top to bottom.
 
+### User's quick guide (the physical actions, in this exact order)
+
+This is the sequence of **manual actions the user takes**, in order. The agent drives everything else and pauses before each of these to tell the user exactly what to click. The agent should follow this order **even if the user gave the clone link first** - it must not jump ahead to installing/running before the user has done the manual steps below that gate it. (Clone comes first because the Playwright server's CDP config lives in the repo's `.cursor/mcp.json`, so the server can't be enabled correctly until the repo is on disk; adding Playwright via the **+** button *before* cloning would install the wrong - non-CDP - config.)
+
+1. **Give the clone link.** Paste `https://github.com/Sesamsesam/csm-outreach-dashboard-cursor` into the agent chat and say "set this up". The agent clones it to `~/Documents/csm-outreach-dashboard-cursor` (or `%USERPROFILE%\Documents\...` on Windows) and opens it as the workspace.
+2. **Restart Cursor once** (when the agent tells you to) so the `playwright` MCP server from the repo's `.cursor/mcp.json` registers. MCP servers load at startup, not on file save.
+3. **Enable the playwright server.** Click the **+** in the chat → **MCP servers** → toggle **playwright** **ON**. (You're not "adding" it - the repo already defined it with the CDP config; you just turn it on. If it's already on, skip.)
+4. **Set the approvals allowlists.** **Settings → Agents →** scroll to the **Run Mode** area:
+   - **Run Mode** = **Allowlist (with Sandbox)**
+   - **Browser Protection** = **OFF**
+   - **MCP Allowlist**: paste `playwright:*`
+   - **Command Allowlist**: paste `python3, python, rm, mkdir, cat, ls, cp, pip3, pip, bash, node, git clone, chmod, which, open`
+   - No restart needed; live immediately.
+5. **Start the dedicated Chrome.** Double-click `launch-chrome.command` (macOS) / `launch-chrome.bat` (Windows) / `launch-chrome.sh` (Linux). A **separate** Chrome window opens with its own profile; your normal Chrome is untouched. Keep it running.
+6. **Log into LinkedIn.** The agent opens LinkedIn in that dedicated Chrome; you log in once (username, password, 2FA). The session persists in that profile.
+7. **Done.** The agent finishes the rest (creates `csm_jobs.csv` + `search_config.json`, starts the dashboard at http://localhost:5001, saves your `user_profile.txt`, writes `setup_complete.json`). Then you can say "run my daily job search".
+
 ## Step 0 - Get the project onto the machine (run first, before checking setup state)
 
 Decide whether the project is already open on disk:

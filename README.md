@@ -30,6 +30,18 @@ That's it. The agent clones the repo onto your machine (into your `Documents` fo
 
 You'll be asked to take a few physical actions along the way (approve the MCP server, restart Cursor once, set the allowlist in Settings, log into LinkedIn). Everything else the agent does for you.
 
+**Your manual steps, in order** (the agent pauses before each and tells you exactly what to click):
+
+1. **Paste the clone link** + "set this up" - the agent clones to your `Documents` folder and opens it.
+2. **Restart Cursor once** (agent tells you when) so the `playwright` browser server registers.
+3. **Enable Playwright**: click the **+** in chat → **MCP servers** → toggle **playwright** ON (the repo already configured it with the CDP settings; you just turn it on).
+4. **Set the allowlists**: **Settings → Agents →** Run Mode area → **Run Mode = Allowlist (with Sandbox)**, **Browser Protection = OFF**, paste `playwright:*` into **MCP Allowlist**, and paste `python3, python, rm, mkdir, cat, ls, cp, pip3, pip, bash, node, git clone, chmod, which, open` into **Command Allowlist**.
+5. **Start the dedicated Chrome**: double-click `launch-chrome.command` / `.bat` / `.sh`. A separate Chrome window opens (your normal Chrome is untouched).
+6. **Log into LinkedIn** in that dedicated Chrome (once - it persists).
+7. **Done** - the agent builds the CSV + config, starts the dashboard at http://localhost:5001, and you can say "run my daily job search".
+
+> **Why clone comes before enabling Playwright:** the Playwright server's CDP config lives in the repo's `.cursor/mcp.json`. If you add Playwright via the **+** button *before* cloning, you'd get the wrong (non-CDP, automation-Chromium) config. Cloning first brings the correct config; then you just toggle it on.
+
 The two skills auto-load from `.cursor/skills/` - no install step. After setup, just say **"run my daily job search"** and the agent scrapes LinkedIn and enriches the new rows in one flow.
 
 > **Already cloned it yourself?** Open the folder in Cursor (`File -> Open Folder`), then paste the same setup line above. The agent sees the project is already there and skips the clone step.
