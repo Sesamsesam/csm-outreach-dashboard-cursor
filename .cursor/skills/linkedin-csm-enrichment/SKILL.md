@@ -32,10 +32,10 @@ This skill uses Playwright MCP's core browser tools. **Tool mapping**:
 
 **Before the first navigation of a run, confirm:**
 
-1. **Playwright MCP is connected.** If no `browser_*` tools are available, stop and tell the user: "The Playwright MCP browser tool isn't connected. Run `set up the browser tool` (see BROWSER_SETUP.md) and restart, then try again."
-2. **LinkedIn is logged in.** Call `browser_navigate` to `https://www.linkedin.com/feed/`, then `browser_evaluate` with `() => (document.title + ' | ' + (document.body.innerText || '').slice(0, 120))`. If it indicates a sign-in page, stop and tell the user to log into LinkedIn in the Playwright MCP browser window. Playwright MCP keeps a **persistent profile per project** (macOS: `~/Library/Caches/ms-playwright/mcp-chromium-{workspace-hash}`), so the login sticks across runs.
+1. **Playwright MCP is connected to your real Chrome.** If no `browser_*` tools are available, stop and tell the user: "The Playwright MCP browser tool isn't connected. Make sure Chrome is running with the debug port (run `launch-chrome.command` / `.bat` / `.sh`), then run `set up the browser tool` (see BROWSER_SETUP.md) and restart, then try again."
+2. **LinkedIn is logged in.** Call `browser_navigate` to `https://www.linkedin.com/feed/`, then `browser_evaluate` with `() => (document.title + ' | ' + (document.body.innerText || '').slice(0, 120))`. If it indicates a sign-in page, stop and tell the user to log into LinkedIn in their real Chrome (the debug-port one). The session lives in the user's **normal Chrome profile** (we drive their real Chrome over CDP), so the login sticks across runs like any normal LinkedIn login.
 
-> **One profile at a time:** a Playwright MCP persistent profile can only be used by one browser instance at a time. Do not run two enrichment sessions against the same project simultaneously.
+> **One browser at a time:** the CDP hybrid connects to a single Chrome on port 9222, and a profile can only be used by one browser instance at a time. Do not run two enrichment sessions against the same project simultaneously.
 
 ---
 
@@ -435,6 +435,6 @@ Globex (3 contacts):
 - **Contact 2 profile shows no "More profiles for you"**: Skip Contact 4 for this job.
 - **DM > 300 characters**: Trim to under 300, keeping the core ask and name intact.
 - **Cover letter dir missing**: Create it with `mkdir -p` before writing.
-- **Login wall appears**: Stop immediately and ask the user to log into LinkedIn in the Playwright MCP browser window (see Browser tool preflight). The persistent profile keeps the session.
+- **Login wall appears**: Stop immediately and ask the user to log into LinkedIn in their real Chrome (the debug-port one - see Browser tool preflight). The session lives in their normal Chrome profile.
 - **Premium (✦) profiles**: Name, title, and path are still extractable from People tab search results even if the full profile is paywalled.
 - **Misleading headline (contact seems wrong level)**: The People tab shows LinkedIn headlines, not current job titles. A headline like "Manager overseeing teams with $50M ARR" may refer to a past role. If uncertain, `browser_navigate` to the person's full profile to verify their current role before selecting them as Contact 2.
