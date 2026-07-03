@@ -154,7 +154,7 @@ This is required for the skills to run end-to-end without the user approving eve
 
 By default, Cursor's approvals/classifier interrupts every browser action (and specifically flags LinkedIn profile-data extraction - the core of enrichment - as "third-party data collection"), and it prompts for every shell command not on the Command Allowlist. The fix: allowlist the Playwright MCP server and the skill shell commands. This turns off approvals only for what these two skills do and leaves the rest of the agent guarded.
 
-Walk the user through it in **Cursor Settings -> "Approvals & Execution for commands, MCP and more"**. Tell them each exact value to set:
+Walk the user through it in **Cursor Settings -> Agents** (open Settings, click the **Agents** section, then scroll down to the **Run Mode** area - the **Command Allowlist** and **MCP Allowlist** fields are right there). Tell them each exact value to set:
 
 1. **Run Mode** -> **Allowlist (with Sandbox)**. (Not "Auto-review outside the sandbox" / "no sandbox" - that *increases* prompts, it does not remove them.)
 2. **Browser Protection** -> **OFF** (if ON, it overrides the MCP allowlist and forces approval on every browser call).
