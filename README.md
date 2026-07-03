@@ -2,7 +2,7 @@
 
 A complete local job-outreach system for Customer Success Manager roles (retargetable to any title). Two Cursor agent skills scrape LinkedIn and enrich every job with contacts, personalized DMs, and a cover letter. A local web dashboard gives you a clean view of everything - search, filter, track outreach status, copy messages, and find executive emails - all from one page. Everything lives in **one CSV** on your machine; nothing is uploaded anywhere.
 
-This is the **Cursor** edition. It uses [Playwright MCP](https://github.com/microsoft/playwright-mcp) (Microsoft's official browser-automation server) connected to **your real Chrome over CDP** to drive a logged-in LinkedIn session - so the agent uses your genuine Chrome fingerprint and existing login instead of a detectable separate browser. Plus Cursor's native skills/rules system. No Claude subscription or paid tools required - you can run the whole thing on Cursor's free tier.
+This is the **Cursor** edition. It uses [Playwright MCP](https://github.com/microsoft/playwright-mcp) (Microsoft's official browser-automation server) connected to **a dedicated instance of your real Chrome over CDP** to drive a logged-in LinkedIn session - so the agent uses your genuine Chrome fingerprint (real plugins, TLS, no `navigator.webdriver`) instead of a detectable automation browser. Plus Cursor's native skills/rules system. No Claude subscription or paid tools required - you can run the whole thing on Cursor's free tier.
 
 ---
 
@@ -21,9 +21,9 @@ If you just installed Cursor, do this:
 That's it. The agent clones the repo onto your machine (into your `Documents` folder by default, or wherever you tell it), opens it as the workspace, and then:
 
 1. Checks and installs prerequisites (Python, Flask, Node.js for the browser tool).
-2. Starts your real Chrome with a debug port (one-click helper script) and connects the **Playwright MCP** browser server to it via `.cursor/mcp.json` - so the agent drives your actual Chrome, not a detectable automation browser. Includes a one-time Cursor restart so the server registers.
+2. Starts a separate Chrome instance with a debug port (one-click helper script - your normal Chrome is untouched) and connects the **Playwright MCP** browser server to it via `.cursor/mcp.json` - so the agent drives your real Chrome fingerprint, not a detectable automation browser. Includes a one-time Cursor restart so the server registers.
 3. Creates your empty `csm_jobs.csv` from `schema.py`.
-4. Opens LinkedIn in your Chrome so you can log in (one time - it's your normal Chrome profile, so the session persists).
+4. Opens LinkedIn in that dedicated Chrome so you can log in (one time - the session persists in that profile).
 5. Saves your name/email for cover letters.
 6. Starts the dashboard at **http://localhost:5001**.
 
@@ -40,7 +40,7 @@ The two skills auto-load from `.cursor/skills/` - no install step. After setup, 
 ## What's included
 
 - **Two Cursor agent skills** - one scrapes LinkedIn job postings (17 fields per job, with blocklists and sponsorship detection), the other enriches them with up to 4 contacts, tier-specific DMs, and a formal cover letter.
-- **Playwright MCP browser integration (CDP-to-real-Chrome)** - the official, Microsoft-maintained browser server, pre-wired in `.cursor/mcp.json` to connect to **your real Chrome**. The agent uses your genuine Chrome fingerprint + logged-in sessions instead of a detectable automation browser - the biggest LinkedIn-detection-risk reduction available without leaving the official tool. One-click helper scripts (`launch-chrome.command` / `.bat` / `.sh`) start Chrome with the debug port.
+- **Playwright MCP browser integration (CDP-to-real-Chrome)** - the official, Microsoft-maintained browser server, pre-wired in `.cursor/mcp.json` to connect to **a dedicated instance of your real Chrome**. The agent uses your genuine Chrome fingerprint (real plugins, WebGL, TLS, no `navigator.webdriver`) instead of a detectable automation browser - the biggest LinkedIn-detection-risk reduction available without leaving the official tool. One-click helper scripts (`launch-chrome.command` / `.bat` / `.sh`) start the dedicated Chrome with the debug port; your normal Chrome is left alone.
 - **Local web dashboard** - a Flask app with tab navigation, full-text search, a live settings panel, outreach status tracking, DM/cover-letter copy buttons, and Hunter.io executive email lookup.
 - **23+ configurable settings** - change the role, location, seniority, tone, contact types, or any other knob by asking the agent in plain language. All settings live in one file and take effect on the next run.
 - **One local data file** - `csm_jobs.csv`. No cloud, no database, no accounts.
@@ -113,9 +113,9 @@ Navigation and filtering, job cards (grid view), a job detail page with color-co
 ## Prerequisites
 
 - **Cursor** installed (the skills run inside it). Free tier works.
-- **Google Chrome** installed (the agent drives your real Chrome, not a separate browser).
-- **Playwright MCP** (Microsoft's official browser server) - pre-wired in `.cursor/mcp.json` to connect to your Chrome over CDP; the agent walks you through enabling it. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md). Needs **Node.js 18+**.
-- **A logged-in LinkedIn session** in your Chrome. The agent opens LinkedIn for you; you log in once and it persists (it's your normal Chrome profile).
+- **Google Chrome** installed (the agent drives a dedicated instance of your real Chrome, separate from your daily Chrome).
+- **Playwright MCP** (Microsoft's official browser server) - pre-wired in `.cursor/mcp.json` to connect to that Chrome over CDP; the agent walks you through enabling it. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md). Needs **Node.js 18+**.
+- **A logged-in LinkedIn session** in that dedicated Chrome. The agent opens LinkedIn for you; you log in once and it persists (stored in the dedicated profile).
 - **Python 3** and **Flask** (one `pip` install) for the dashboard.
 
 ## Usage
@@ -165,7 +165,7 @@ Your data never goes to GitHub. The `.gitignore` excludes `csm_jobs.csv`, `seen_
 ├── AGENTS.md                 <- guidance for the Cursor agent
 ├── RETARGETING.md            <- how to change/add search settings (full config reference)
 ├── BROWSER_SETUP.md          <- how to install Playwright MCP + log into LinkedIn
-├── launch-chrome.command     <- macOS: starts your real Chrome with a CDP debug port (double-click)
+├── launch-chrome.command     <- macOS: starts a separate Chrome (dedicated profile + CDP debug port) - double-click
 ├── launch-chrome.bat         <- Windows: same
 ├── launch-chrome.sh          <- Linux: same
 ├── search_config.example.json <- shipped default settings (CSM)
@@ -175,7 +175,7 @@ Your data never goes to GitHub. The `.gitignore` excludes `csm_jobs.csv`, `seen_
 ├── setup_complete.json       <- per-machine setup marker (gitignored)
 ├── cover_letters/            <- generated cover letters (gitignored)
 ├── .cursor/
-│   ├── mcp.json              <- pre-wires Playwright MCP over CDP to your real Chrome (port 9222)
+│   ├── mcp.json              <- pre-wires Playwright MCP over CDP to a dedicated Chrome (127.0.0.1:9222)
 │   ├── rules/
 │   │   └── project-setup.mdc <- always-on house rules
 │   └── skills/               <- AUTHORITATIVE skills (auto-load in Cursor)
@@ -189,4 +189,4 @@ Your data never goes to GitHub. The `.gitignore` excludes `csm_jobs.csv`, `seen_
 
 ## How this edition differs from the Claude edition
 
-This Cursor edition is a clean, Cursor-native port. It drops the Claude/Cowork-specific pieces (the Cowork plugin, the shared-folder install-path logic, `CLAUDE.md`) and replaces them with Cursor's own systems: `.cursor/skills/`, `.cursor/rules/*.mdc`, `.cursor/mcp.json`, and `AGENTS.md`. The browser tool is Playwright MCP connected to your real Chrome over CDP (instead of Claude Code's built-in browser) - using your genuine Chrome fingerprint to keep LinkedIn from flagging the session. Everything else - the single-CSV architecture, the schema, the dashboard, the targeting config, the retargeting flow - is identical and runs the same way.
+This Cursor edition is a clean, Cursor-native port. It drops the Claude/Cowork-specific pieces (the Cowork plugin, the shared-folder install-path logic, `CLAUDE.md`) and replaces them with Cursor's own systems: `.cursor/skills/`, `.cursor/rules/*.mdc`, `.cursor/mcp.json`, and `AGENTS.md`. The browser tool is Playwright MCP connected to a dedicated instance of your real Chrome over CDP (instead of Claude Code's built-in browser) - using your genuine Chrome fingerprint to keep LinkedIn from flagging the session. Everything else - the single-CSV architecture, the schema, the dashboard, the targeting config, the retargeting flow - is identical and runs the same way.

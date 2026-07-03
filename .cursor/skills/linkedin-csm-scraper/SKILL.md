@@ -34,7 +34,7 @@ This skill uses Playwright MCP's core browser tools. **Tool mapping** (what each
 **Before the first navigation of a run, confirm:**
 
 1. **Playwright MCP is connected to your real Chrome.** If no `browser_*` tools are available, stop and tell the user: "The Playwright MCP browser tool isn't connected. Make sure Chrome is running with the debug port (run `launch-chrome.command` / `.bat` / `.sh`), then run `set up the browser tool` (see BROWSER_SETUP.md) and restart, then say 'run my daily job search' again." Do not attempt to scrape without it.
-2. **LinkedIn is logged in.** Call `browser_navigate` to `https://www.linkedin.com/feed/`, then `browser_evaluate` with `() => (document.title + ' | ' + (document.body.innerText || '').slice(0, 120))`. If the title/text indicates a sign-in page (e.g. "Sign in", "Join LinkedIn", "Welcome to LinkedIn"), stop and tell the user to log into LinkedIn in their real Chrome (the debug-port one), then continue. The session lives in the user's **normal Chrome profile** (we drive their real Chrome over CDP), so the login sticks across runs like any normal LinkedIn login - they only log in once.
+2. **LinkedIn is logged in.** Call `browser_navigate` to `https://www.linkedin.com/feed/`, then `browser_evaluate` with `() => (document.title + ' | ' + (document.body.innerText || '').slice(0, 120))`. If the title/text indicates a sign-in page (e.g. "Sign in", "Join LinkedIn", "Welcome to LinkedIn"), stop and tell the user to log into LinkedIn in the dedicated Chrome (the debug-port one started by `launch-chrome.command` / `.bat` / `.sh`), then continue. The session lives in a **dedicated Chrome profile** (`~/.csm-outreach/chrome-profile`, separate from the user's daily Chrome) that we drive over CDP, so the login sticks across runs - they only log in once.
 
 > **One browser at a time:** the CDP hybrid connects to a single Chrome on port 9222, and a profile can only be used by one browser instance at a time. Do not run two scrape sessions against the same project simultaneously.
 
@@ -402,7 +402,7 @@ After reporting the scrape results (Step 6), continue directly in the same respo
 
 ## Edge cases
 
-- **Login page**: Stop immediately and tell the user to log into LinkedIn in their real Chrome (the debug-port one - see Browser tool preflight). The session lives in their normal Chrome profile, so this should only happen if they've logged out.
+- **Login page**: Stop immediately and tell the user to log into LinkedIn in the dedicated Chrome (the debug-port one - see Browser tool preflight). The session lives in the dedicated profile, so this should only happen if they've logged out.
 - **Right panel never loads** (the page-ready gate times out twice - once on the initial navigation, once on the retry): only then skip that job ID and continue to the next. Do not skip on a single early read - the gate exists to prevent that false negative.
 - **Job expired mid-run**: If the `currentJobId` URL loads the job list but shows no matching right panel, the job was removed — skip it.
 - **Company page returns 404 or redirect**: Leave all company fields blank, continue.

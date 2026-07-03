@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Launch YOUR real Chrome/Chromium with a CDP debug port so Playwright MCP can
-# drive it. See launch-chrome.command for the macOS version (same logic).
-#
-# Why: the agent uses your genuine Chrome fingerprint + existing logged-in
-# sessions (e.g. LinkedIn) instead of a separate detectable Playwright browser.
+# Start a SEPARATE Chrome/Chromium instance (dedicated profile + CDP debug port)
+# that Playwright MCP connects to. Does NOT quit your normal Chrome.
+# See launch-chrome.command for the macOS version (same logic + rationale).
 set -e
 
 PORT=9222
+PROFILE="$HOME/.csm-outreach/chrome-profile"
+mkdir -p "$PROFILE"
 CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
 
 if [ -z "$CHROME" ]; then
@@ -15,14 +15,10 @@ if [ -z "$CHROME" ]; then
   exit 1
 fi
 
-echo "==> Quitting Chrome..."
-pkill -f "google-chrome|chromium" 2>/dev/null || true
-sleep 2
-
-echo "==> Relaunching $CHROME with remote debugging on port $PORT..."
-"$CHROME" --remote-debugging-port="$PORT" >/dev/null 2>&1 &
+echo "==> Starting a separate Chrome (dedicated profile: $PROFILE) on port $PORT..."
+"$CHROME" --remote-debugging-port="$PORT" --user-data-dir="$PROFILE" >/dev/null 2>&1 &
 
 echo ""
-echo "Done. Chrome is starting. Playwright MCP will connect to http://localhost:$PORT."
-echo "Log into LinkedIn (once) in this Chrome if you haven't already."
-echo "Keep Chrome running while you scrape."
+echo "Done. A new Chrome window opened. Playwright MCP connects to http://127.0.0.1:$PORT."
+echo "Log into LinkedIn (once) in THIS Chrome window - the session persists."
+echo "Keep this Chrome running while you scrape. Close it when done."

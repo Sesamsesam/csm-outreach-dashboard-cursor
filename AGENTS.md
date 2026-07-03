@@ -4,7 +4,7 @@
 
 **Any agent working in this project must follow the six rules in `.cursor/rules/project-setup.mdc` (always applied).** They exist because inconsistency (re-running setup, making a second data file, hard-coding role values into skills) is the main thing that breaks this project. Read that file first; the rules there win when in doubt.
 
-Quick summary: setup is once; one data file (`csm_jobs.csv`); targeting lives in `search_config.json`; retargeting is forward-only; recognize casual settings changes; the browser tool is Playwright MCP connected to the user's real Chrome over CDP (port 9222) for low detection risk.
+Quick summary: setup is once; one data file (`csm_jobs.csv`); targeting lives in `search_config.json`; retargeting is forward-only; recognize casual settings changes; the browser tool is Playwright MCP connected to a dedicated real-Chrome instance over CDP (127.0.0.1:9222) for low detection risk.
 
 > **FORMATTING RULE - NO EM DASHES:** Never use em dashes (--) anywhere - not in DMs, cover letters, reports, summaries, or any other output. Always use a regular hyphen (-) instead. This rule applies across all skills and all generated text, without exception.
 
@@ -12,26 +12,28 @@ This is a LinkedIn job-outreach tracker with a local web dashboard, two Cursor a
 
 ## The browser tool: Playwright MCP (CDP-to-real-Chrome hybrid)
 
-The skills drive a real, logged-in browser through **Playwright MCP** - Microsoft's official browser-automation MCP server. To keep LinkedIn from flagging the session as automation, this project wires Playwright MCP to **the user's real Chrome over CDP** (`--cdp-endpoint http://localhost:9222`) instead of letting it launch its own detectable Chromium. The agent then drives the user's genuine Chrome fingerprint + existing logged-in sessions - no `navigator.webdriver`, real plugins, real TLS, real `window.chrome`. This is the single biggest detection-risk reduction available without abandoning the official tool.
+The skills drive a real, logged-in browser through **Playwright MCP** - Microsoft's official browser-automation MCP server. To keep LinkedIn from flagging the session as automation, this project wires Playwright MCP to **a separate instance of your real Chrome over CDP** (`--cdp-endpoint http://127.0.0.1:9222`) instead of letting it launch its own detectable Chromium. The agent then drives your genuine Chrome binary - real plugins, real WebGL, real TLS, no `navigator.webdriver` - instead of a Playwright fingerprint. This is the single biggest detection-risk reduction available without leaving the official tool.
 
-`.cursor/mcp.json` is pre-wired for it:
+> **Why a dedicated profile (not your daily Chrome):** Chrome refuses remote debugging on your default profile (a security measure), so the helper launches a **separate Chrome instance with its own profile** (`~/.csm-outreach/chrome-profile`), running alongside your normal Chrome - your normal Chrome is not quit or touched. The user logs into LinkedIn once in that dedicated profile; it persists.
+
+`.cursor/mcp.json` is pre-wired for it (note `127.0.0.1`, not `localhost` - Chrome listens on IPv4 and Playwright resolves `localhost` to IPv6, which would refuse):
 
 ```json
 {
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "http://localhost:9222"]
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"]
     }
   }
 }
 ```
 
-For this to connect, **the user's real Chrome must be running with `--remote-debugging-port=9222`**. Ship helper scripts for that: `launch-chrome.command` (macOS, double-click it), `launch-chrome.bat` (Windows), `launch-chrome.sh` (Linux). They quit Chrome and relaunch it with the debug port. The user logs into LinkedIn once in that Chrome; the session is their normal Chrome profile, so it persists like any normal login.
+For this to connect, **a dedicated Chrome instance must be running with `--remote-debugging-port=9222 --user-data-dir=~/.csm-outreach/chrome-profile`**. Ship helper scripts for that: `launch-chrome.command` (macOS, double-click it), `launch-chrome.bat` (Windows), `launch-chrome.sh` (Linux). They open a separate Chrome window with the debug port - your normal Chrome is left alone. The user logs into LinkedIn once in that dedicated Chrome; the session persists in that profile.
 
 When the server connects, the agent gets `browser_*` tools (`browser_navigate`, `browser_evaluate`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_type`, `browser_wait_for`, etc.). The skills use these. Full install/login instructions are in `BROWSER_SETUP.md`.
 
-> **Fallback (simple Playwright Chromium).** If the user can't or won't run the debug-Chrome helper (e.g. corporate-managed Chrome), remove `--cdp-endpoint http://localhost:9222` from `.cursor/mcp.json`. Playwright MCP then launches its own Chromium with a persistent profile (macOS: `~/Library/Caches/ms-playwright/mcp-chromium-{workspace-hash}`). This still works but exposes Playwright's automation fingerprint (`navigator.webdriver = true`, SwiftShader, empty plugins) - higher detection risk on LinkedIn. Use only if the CDP hybrid isn't possible.
+> **Fallback (simple Playwright Chromium).** If the user can't or won't run the debug-Chrome helper, remove `--cdp-endpoint`, `http://127.0.0.1:9222` from `.cursor/mcp.json`. Playwright MCP then launches its own Chromium with a persistent profile (macOS: `~/Library/Caches/ms-playwright/mcp-chromium-{workspace-hash}`). This still works but exposes Playwright's automation fingerprint (`navigator.webdriver = true`, SwiftShader, empty plugins) - higher detection risk on LinkedIn. Use only if the CDP hybrid isn't possible.
 
 If the `browser_*` tools are not available during a run, the skills will detect it and tell the user to run the browser-tool setup (Step 2 below / `BROWSER_SETUP.md`) before continuing.
 
@@ -95,29 +97,29 @@ Run each check yourself. If something is missing, install it. Only involve the u
 
 Only after ALL prerequisites pass, continue to Step 2. If Node is the only missing piece and the user just wants the dashboard (not scraping), you can proceed with the dashboard and defer the browser-tool step - but flag that scraping/enrichment need Node 18+ before they'll work.
 
-### Step 2 - Connect the browser tool (Playwright MCP over CDP to your real Chrome)
+### Step 2 - Connect the browser tool (Playwright MCP over CDP to a dedicated Chrome)
 
-This is the one genuinely new prerequisite vs. a plain Python project, and it's what makes the LinkedIn scrape work. The project uses the **CDP-to-real-Chrome hybrid**: Playwright MCP (Microsoft official) connects to the user's real Chrome over a debug port, so the agent drives the user's genuine Chrome fingerprint + logged-in sessions instead of a detectable separate Chromium. This is the biggest LinkedIn-detection-risk reduction available without leaving the official tool.
+This is the one genuinely new prerequisite vs. a plain Python project, and it's what makes the LinkedIn scrape work. The project uses the **CDP-to-real-Chrome hybrid**: Playwright MCP (Microsoft official) connects to a separate instance of the user's real Chrome over a debug port, so the agent drives a genuine Chrome fingerprint instead of a detectable separate Chromium. This is the biggest LinkedIn-detection-risk reduction available without leaving the official tool.
 
 > **Important: Playwright MCP is NOT in Cursor's MCP marketplace.** If the user says they searched the marketplace (Customize -> MCP market) for "Playwright" or "browser" and found nothing, that is expected - it isn't a marketplace listing. It comes in through the project's `.cursor/mcp.json` (below), the one-click install button at https://github.com/microsoft/playwright-mcp (Cursor section), or Settings -> Tools & MCP -> Add new MCP Server. Tell them not to bother searching the market.
 
 Walk the user through it in this order:
 
-1. **Start their real Chrome with the debug port.** Run the helper for their OS (double-click on macOS, or run from terminal):
+1. **Start the dedicated Chrome with the debug port.** Run the helper for their OS (double-click on macOS, or run from terminal):
    - macOS: `./launch-chrome.command`
    - Windows: `launch-chrome.bat`
    - Linux: `./launch-chrome.sh`
-   It quits Chrome and relaunches it with `--remote-debugging-port=9222`. The user's tabs restore. Tell them: **keep this Chrome running while scraping; close it when done to turn the debug port off.** If the helper can't find Chrome, point them to install Google Chrome.
-2. Tell the user: open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command). They should see a **playwright** server listed (from `.cursor/mcp.json`, already configured with `--cdp-endpoint http://localhost:9222`).
-3. If it's not enabled, have them click **Enable** / toggle it on. Cursor runs `npx -y @playwright/mcp@latest --cdp-endpoint http://localhost:9222`; the first launch downloads the package (needs Node 18+, checked in Step 1) and connects to the running Chrome.
+   It opens a **separate Chrome window** with its own profile (`~/.csm-outreach/chrome-profile`) and `--remote-debugging-port=9222`. The user's normal Chrome is untouched. Tell them: **keep this dedicated Chrome running while scraping; close it when done to turn the debug port off.**
+2. Tell the user: open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command). They should see a **playwright** server listed (from `.cursor/mcp.json`, configured with `--cdp-endpoint http://127.0.0.1:9222`).
+3. If it's not enabled, have them click **Enable** / toggle it on. Cursor runs `npx -y @playwright/mcp@latest --cdp-endpoint http://127.0.0.1:9222`; the first launch downloads the package (needs Node 18+, checked in Step 1) and connects to the dedicated Chrome.
 4. **Restart Cursor** if the server was just added or its args changed - MCP servers load at startup, not on file save.
 5. Confirm the server turns **green/connected**. Common failures:
    - **Red / "command not found"** = Cursor can't find `npx` (GUI-launched Cursor doesn't inherit shell PATH; common with Homebrew `/opt/homebrew/bin`, nvm, fnm, asdf). Fix: run `which npx`, put that absolute path as `command` in the user's **global** `~/.cursor/mcp.json` - keep the repo's `.cursor/mcp.json` generic. See `BROWSER_SETUP.md` troubleshooting.
-   - **Red / connection timeout** = Chrome isn't running with the debug port. Re-run the helper from step 1, then toggle the server off/on or restart Cursor.
-6. Verify from the agent side: call `browser_navigate` to `https://example.com`. It should drive a tab in the user's **real Chrome** (not a new Playwright window) and report the title. If that works, the CDP hybrid is live.
-7. **Log into LinkedIn** (Step 6 below) in that real Chrome if not already signed in.
+   - **Red / `ECONNREFUSED ::1:9222` or connection timeout** = the dedicated Chrome isn't running on port 9222. Re-run the helper from step 1, then toggle the server off/on or restart Cursor. (If the error mentions `::1`, the config is using `localhost` instead of `127.0.0.1` - use `127.0.0.1`.)
+6. Verify from the agent side: call `browser_navigate` to `https://example.com`. It should drive a tab in the **dedicated Chrome window** and report the title. If that works, the CDP hybrid is live.
+7. **Log into LinkedIn** (Step 6 below) in that dedicated Chrome - once, since the profile persists.
 
-> **Fallback (simple Playwright Chromium).** If the user can't run the debug-Chrome helper (corporate-managed Chrome, etc.), edit `.cursor/mcp.json` and remove `--cdp-endpoint`, `http://localhost:9222` from the args. Playwright MCP then launches its own Chromium with a persistent profile. This works but exposes Playwright's automation fingerprint - higher LinkedIn-detection risk. Only use if the CDP hybrid isn't possible.
+> **Fallback (simple Playwright Chromium).** If the user can't run the debug-Chrome helper, edit `.cursor/mcp.json` and remove `--cdp-endpoint`, `http://127.0.0.1:9222` from the args. Playwright MCP then launches its own Chromium with a persistent profile. This works but exposes Playwright's automation fingerprint - higher LinkedIn-detection risk. Only use if the CDP hybrid isn't possible.
 
 > Note: Cursor used to ship a built-in browser tool but removed it for security reasons; Cursor staff recommend Microsoft's official Playwright MCP as the replacement, which is what this project uses. Do not suggest the built-in Browser Tab for scraping.
 
@@ -149,11 +151,11 @@ Then tell the user to open **http://localhost:5001** in their browser.
 
 ### Step 6 - Log into LinkedIn (required before scraping/enriching)
 
-The skills can't read LinkedIn without a logged-in session. Because we're using the CDP-to-real-Chrome hybrid, the session lives in the user's **normal Chrome profile** - so if they're already signed into LinkedIn in Chrome, there's often nothing to do. If not:
-1. Make sure Chrome is running with the debug port (run `launch-chrome.command` / `.bat` / `.sh` from Step 2).
-2. Ask you to open LinkedIn in that Chrome (you call `browser_navigate` to `https://www.linkedin.com`) - or they just open it themselves in that Chrome window.
+The skills can't read LinkedIn without a logged-in session. Because the CDP hybrid uses a **dedicated Chrome profile** (`~/.csm-outreach/chrome-profile`, separate from the user's daily Chrome), the user logs into LinkedIn once in that dedicated profile:
+1. Make sure the dedicated debug Chrome is running (run `launch-chrome.command` / `.bat` / `.sh` from Step 2).
+2. Ask you to open LinkedIn in that Chrome (you call `browser_navigate` to `https://www.linkedin.com`) - or they just open it themselves in that dedicated Chrome window.
 3. The user logs into LinkedIn manually (username, password, 2FA).
-4. Once they confirm they're signed in, you're done - it's their normal Chrome profile, so the session persists like any normal login. No separate "automation profile" to maintain.
+4. Once they confirm they're signed in, you're done - the session persists in the dedicated profile across future runs.
 
 If a login wall appears mid-scrape later, the skill stops and asks them to log in (then resumes).
 
@@ -275,7 +277,7 @@ Two things that never change when retargeting:
 ├── AGENTS.md                 <- this file (agent guidance)
 ├── RETARGETING.md            <- how to change/add search knobs (the retargeting flow)
 ├── BROWSER_SETUP.md          <- how to install Playwright MCP + log into LinkedIn
-├── launch-chrome.command     <- macOS: starts your real Chrome with a CDP debug port (double-click)
+├── launch-chrome.command     <- macOS: starts a separate Chrome (dedicated profile + CDP debug port) - double-click
 ├── launch-chrome.bat         <- Windows: same
 ├── launch-chrome.sh          <- Linux: same
 ├── search_config.example.json <- shipped CSM default knobs (committed; the fallback)
@@ -285,7 +287,7 @@ Two things that never change when retargeting:
 ├── setup_complete.json       <- per-machine setup marker (gitignored)
 ├── cover_letters/            <- generated cover letters (gitignored)
 ├── .cursor/
-│   ├── mcp.json              <- pre-wires Playwright MCP over CDP to your real Chrome (port 9222)
+│   ├── mcp.json              <- pre-wires Playwright MCP over CDP to a dedicated Chrome (127.0.0.1:9222)
 │   ├── rules/
 │   │   └── project-setup.mdc <- always-on house rules
 │   └── skills/               <- AUTHORITATIVE skills (auto-load in Cursor)
