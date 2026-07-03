@@ -44,6 +44,8 @@ Set it up in this order:
    It opens a **separate Chrome window** with its own profile and `--remote-debugging-port=9222`. Your normal Chrome is untouched. **Keep this dedicated Chrome running while scraping; close it when done to turn the debug port off.**
 
    > **macOS first-run warning:** double-clicking `launch-chrome.command` may show "Apple cannot check it for malicious software" / "unidentified developer." To bypass: right-click (or Control-click) the file -> **Open** -> **Open** in the dialog. Or run it from a terminal: `cd <project folder> && ./launch-chrome.command`. (If Terminal says "permission denied," run `chmod +x launch-chrome.command` first.) You only do this once.
+   >
+   > **Windows first-run warning (SmartScreen):** running `launch-chrome.bat` may trigger "Windows protected your PC" / SmartScreen because the script isn't signed. Click **More info** -> **Run anyway**. If File Explorer blocks it with a "This file came from another computer" checkbox (Mark of the Web), right-click the file -> **Properties** -> check **Unblock** -> OK, then run it again. If `.bat` files are blocked entirely by your org's policy, run it from Command Prompt: `cd <project folder>` then `launch-chrome.bat`. You only do this once.
 2. Open the project folder in Cursor. Cursor detects `.cursor/mcp.json`.
 3. Open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command from the command palette).
 4. You should see a **playwright** server. Click **Enable** / toggle it on.

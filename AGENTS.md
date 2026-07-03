@@ -110,6 +110,7 @@ Walk the user through it in this order:
    - Windows: `launch-chrome.bat`
    - Linux: `./launch-chrome.sh`
    It opens a **separate Chrome window** with its own profile (`~/.csm-outreach/chrome-profile`) and `--remote-debugging-port=9222`. The user's normal Chrome is untouched. Tell them: **keep this dedicated Chrome running while scraping; close it when done to turn the debug port off.**
+   > **First-run OS warning (one-time):** macOS may show "unidentified developer" - bypass via right-click -> Open -> Open (or run from terminal). Windows may show SmartScreen "Windows protected your PC" - click More info -> Run anyway (and unblock the file in Properties if needed). See `BROWSER_SETUP.md` for full details.
 2. Tell the user: open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command). They should see a **playwright** server listed (from `.cursor/mcp.json`, configured with `--cdp-endpoint http://127.0.0.1:9222`).
 3. If it's not enabled, have them click **Enable** / toggle it on. Cursor runs `npx -y @playwright/mcp@latest --cdp-endpoint http://127.0.0.1:9222`; the first launch downloads the package (needs Node 18+, checked in Step 1) and connects to the dedicated Chrome.
 4. **Restart Cursor** if the server was just added or its args changed - MCP servers load at startup, not on file save.

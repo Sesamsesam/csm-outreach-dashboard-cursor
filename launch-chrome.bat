@@ -14,9 +14,24 @@ set PORT=9222
 set PROFILE=%USERPROFILE%\.csm-outreach\chrome-profile
 if not exist "%PROFILE%" mkdir "%PROFILE%"
 
+REM Find chrome.exe in the most common install locations (per-machine and per-user).
+set CHROME=
+if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" set CHROME=C:\Program Files\Google\Chrome\Application\chrome.exe
+if not defined CHROME if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" set CHROME=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
+if not defined CHROME if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" set CHROME=%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe
+
+if not defined CHROME (
+  echo Could not find Google Chrome in the usual install locations.
+  echo Install Chrome from https://www.google.com/chrome/ and try again,
+  echo or edit this script to set CHROME to your chrome.exe path.
+  echo.
+  pause
+  exit /b 1
+)
+
 echo ==> Starting a separate Chrome (dedicated profile) on port %PORT%...
 echo    Your normal Chrome is left alone.
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=%PORT% --user-data-dir="%PROFILE%"
+start "" "%CHROME%" --remote-debugging-port=%PORT% --user-data-dir="%PROFILE%"
 
 echo.
 echo Done. A new Chrome window opened. Playwright MCP connects to http://127.0.0.1:%PORT%.
