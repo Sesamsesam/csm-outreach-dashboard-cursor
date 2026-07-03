@@ -60,15 +60,15 @@ Run each check yourself. If something is missing, install it. Only involve the u
 - **Python 3**: `python3 --version 2>/dev/null && echo OK || echo MISSING` -> if missing, install from python.org (tell the user to click through the installer) or via Homebrew if present.
 - **pip3**: `pip3 --version 2>/dev/null && echo OK || echo MISSING` -> if missing after Python 3: `python3 -m ensurepip --upgrade`.
 - **Flask**: `pip3 show flask >/dev/null 2>&1 && echo OK || echo MISSING` -> if missing: `pip3 install flask`.
-- **Node.js 18+** (needed for Playwright MCP): `node --version 2>/dev/null && echo OK || echo MISSING` -> if missing, tell the user to install Node 18+ from https://nodejs.org (the LTS installer). This is a one-time manual step; npx uses it to run `@playwright/mcp`.
+- **Node.js 18+** (needed for Playwright MCP - `npx` uses it to run `@playwright/mcp`): check both presence AND version with `node --version 2>/dev/null`. It must print `v18` or higher (e.g. `v20`, `v22`). If missing OR below v18, tell the user to install the **LTS** version from https://nodejs.org (the LTS installer). This is a one-time manual step - do not try to auto-install Node for them. (npx ships with Node, so no separate install.)
 
 #### Windows prerequisites
 - **Python 3**: `python --version 2>&1 && echo OK || echo MISSING` (command is `python` on Windows) -> if missing, tell the user to install from https://www.python.org/downloads/ and check "Add Python to PATH".
 - **pip**: `pip --version 2>&1 && echo OK || echo MISSING` -> if missing: `python -m ensurepip --upgrade`.
 - **Flask**: `pip show flask >NUL 2>&1 && echo OK || echo MISSING` -> if missing: `pip install flask`.
-- **Node.js 18+**: `node --version 2>&1 && echo OK || echo MISSING` -> if missing, tell the user to install Node 18+ LTS from https://nodejs.org.
+- **Node.js 18+**: check `node --version 2>&1` - must print `v18` or higher. If missing OR below v18, tell the user to install Node 18+ LTS from https://nodejs.org.
 
-Only after ALL prerequisites pass, continue to Step 2.
+Only after ALL prerequisites pass, continue to Step 2. If Node is the only missing piece and the user just wants the dashboard (not scraping), you can proceed with the dashboard and defer the browser-tool step - but flag that scraping/enrichment need Node 18+ before they'll work.
 
 ### Step 2 - Connect the browser tool (Playwright MCP)
 
