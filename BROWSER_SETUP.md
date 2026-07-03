@@ -42,6 +42,8 @@ Set it up in this order:
    - Linux: `./launch-chrome.sh`
 
    It opens a **separate Chrome window** with its own profile and `--remote-debugging-port=9222`. Your normal Chrome is untouched. **Keep this dedicated Chrome running while scraping; close it when done to turn the debug port off.**
+
+   > **macOS first-run warning:** double-clicking `launch-chrome.command` may show "Apple cannot check it for malicious software" / "unidentified developer." To bypass: right-click (or Control-click) the file -> **Open** -> **Open** in the dialog. Or run it from a terminal: `cd <project folder> && ./launch-chrome.command`. (If Terminal says "permission denied," run `chmod +x launch-chrome.command` first.) You only do this once.
 2. Open the project folder in Cursor. Cursor detects `.cursor/mcp.json`.
 3. Open **Cursor Settings -> Tools & MCP** (or run the **MCP: List Servers** command from the command palette).
 4. You should see a **playwright** server. Click **Enable** / toggle it on.
@@ -90,6 +92,7 @@ The dedicated Chrome profile lives at `~/.csm-outreach/chrome-profile` (macOS/Li
 ## 4. Troubleshooting
 
 - **The playwright server isn't in the MCP marketplace.** Correct - it isn't a marketplace listing. Use the project's `.cursor/mcp.json` (open the project folder and it appears in Settings -> Tools & MCP), or the **one-click install button** at https://github.com/microsoft/playwright-mcp (Cursor section), or add it manually (Settings -> Tools & MCP -> Add new MCP Server -> Name `playwright`, Type `command`, Command `npx -y @playwright/mcp@latest`).
+- **After a config change + Cursor restart, the server shows as OFF / not connected.** This is normal - when the MCP config changes and Cursor restarts, the playwright server can reset to disabled. Go to **Cursor Settings -> Tools & MCP** (or the **+** in chat -> MCP servers) and **toggle it back on**. Give it a few seconds to connect to the dedicated Chrome on 127.0.0.1:9222.
 - **No `browser_*` tools show up.** Make sure you're in Cursor's **Agent** mode (not Chat). Confirm the playwright server is green in Settings -> Tools & MCP. **Restart Cursor** if it was just added - MCP servers load at startup, not on file save. Verify `node --version` is 18+.
 - **Server shows red / "command not found" / won't connect (the #1 cause).** Cursor launched from the Dock/Applications does **not** inherit your shell PATH, so it can't find `npx` - even though your terminal can. This is especially common when Node was installed via Homebrew (`/opt/homebrew/bin`), nvm, fnm, or asdf. Fix: use the **absolute path** to npx. Run `which npx` in a terminal, then set that full path as `command` in the MCP config. For example, on Apple-silicon Homebrew: `"command": "/opt/homebrew/bin/npx"`. Put this in your **global** `~/.cursor/mcp.json` (user-specific, not committed) so it applies everywhere without touching the repo's generic config. Alternatively, launch Cursor from the terminal so it inherits your PATH.
 - **`-y` flag missing -> server hangs forever.** Cursor launches `npx` non-interactively; without `-y`, npx waits for an install confirmation that never arrives. The shipped config already includes `-y` (`["-y", "@playwright/mcp@latest"]`) - keep it.
