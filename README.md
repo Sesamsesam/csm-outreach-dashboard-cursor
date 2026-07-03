@@ -22,12 +22,13 @@ That's it. The agent clones the repo onto your machine (into your `Documents` fo
 
 1. Checks and installs prerequisites (Python, Flask, Node.js for the browser tool).
 2. Starts a separate Chrome instance with a debug port (one-click helper script - your normal Chrome is untouched) and connects the **Playwright MCP** browser server to it via `.cursor/mcp.json` - so the agent drives your real Chrome fingerprint, not a detectable automation browser. Includes a one-time Cursor restart so the server registers.
-3. Creates your empty `csm_jobs.csv` from `schema.py`.
-4. Opens LinkedIn in that dedicated Chrome so you can log in (one time - the session persists in that profile).
-5. Saves your name/email for cover letters.
-6. Starts the dashboard at **http://localhost:5001**.
+3. Configures Cursor's approvals so the skills run without you approving every browser step - it adds `playwright:*` to the MCP allowlist (Run Mode = Allowlist with Sandbox, Browser Protection OFF). This keeps the guardrail for everything else and only turns off approvals for the browser tool.
+4. Creates your empty `csm_jobs.csv` from `schema.py`.
+5. Opens LinkedIn in that dedicated Chrome so you can log in (one time - the session persists in that profile).
+6. Saves your name/email for cover letters.
+7. Starts the dashboard at **http://localhost:5001**.
 
-You'll be asked to take a few physical actions along the way (approve the MCP server, restart Cursor once, log into LinkedIn). Everything else the agent does for you.
+You'll be asked to take a few physical actions along the way (approve the MCP server, restart Cursor once, set the allowlist in Settings, log into LinkedIn). Everything else the agent does for you.
 
 The two skills auto-load from `.cursor/skills/` - no install step. After setup, just say **"run my daily job search"** and the agent scrapes LinkedIn and enriches the new rows in one flow.
 
@@ -116,6 +117,7 @@ Navigation and filtering, job cards (grid view), a job detail page with color-co
 - **Google Chrome** installed (the agent drives a dedicated instance of your real Chrome, separate from your daily Chrome).
 - **Playwright MCP** (Microsoft's official browser server) - pre-wired in `.cursor/mcp.json` to connect to that Chrome over CDP; the agent walks you through enabling it. See [`BROWSER_SETUP.md`](BROWSER_SETUP.md). Needs **Node.js 18+**.
 - **A logged-in LinkedIn session** in that dedicated Chrome. The agent opens LinkedIn for you; you log in once and it persists (stored in the dedicated profile).
+- **The approvals allowlist configured** (`playwright:*` in Cursor's MCP allowlist) so scrapes/enrichment run without you approving every browser step. The agent walks you through it; see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3.
 - **Python 3** and **Flask** (one `pip` install) for the dashboard.
 
 ## Usage
@@ -146,7 +148,7 @@ A daily scrape runs **on your machine** (it drives your logged-in browser and wr
 - **On-demand (simplest).** Open the project and say **"run my daily job search"**.
 - **Cursor Automation (recurring).** A Cursor Automation can fire the same prompt on a schedule; your real Chrome stays logged into LinkedIn.
 
-**Requirements either way:** a logged-in LinkedIn session, the machine awake, and someone available if LinkedIn shows a login wall or CAPTCHA (the skills stop and ask).
+**Requirements either way:** a logged-in LinkedIn session, the machine awake, someone available if LinkedIn shows a login wall or CAPTCHA (the skills stop and ask), **and the approvals allowlist configured** (`playwright:*` in the MCP allowlist - see [`BROWSER_SETUP.md`](BROWSER_SETUP.md) section 3). Without the allowlist, the first browser step of an unattended automation will block on an approval card nobody is there to click.
 
 ## Hunter.io (optional)
 

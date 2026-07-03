@@ -289,6 +289,8 @@ Save as Contact 4.
 
 **Fallback**: If no suitable senior leader found on Contact 2's profile, `browser_navigate` to the company page and search the People tab using a few of the `{senior_leader_titles}` as `keywords=` (e.g. `keywords=VP+General+Manager+CRO`).
 
+> **Live-testing note - prefer the People-tab fallback.** The "More profiles for you" section on a profile surfaces *similar professionals across LinkedIn*, not coworkers - in testing it returned external execs (e.g. the CEO of a different company) who don't work at the target company. Treat profile-hop results as leads to **cross-check against the company**, not as confirmed employees. The People-tab fallback (`keywords=VP+CRO+CCO+General+Manager+President` on the company's `/people/` tab) is more reliable because every result is a confirmed employee. When in doubt, skip the profile hop and go straight to the People-tab fallback.
+
 ---
 
 ## Step 8 — Draft DMs
