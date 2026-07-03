@@ -188,6 +188,8 @@ Walk the user through it in **Cursor Settings -> Agents** (open Settings, click 
 
 No restart needed - the change is live immediately. Verify by driving any `browser_navigate` (no approval card) and running `python3 -c "print(1)"` (no approval card). Full details in `BROWSER_SETUP.md` section 3.
 
+> **Run Mode can silently reset to Auto-review (the default).** An approval-card checkbox ("Enable Auto-review" / "Run in sandbox" / "Always allow"), a Cursor restart, or a version update can flip Run Mode back to the default sandbox mode - after which prompts return. If the user reports approval cards coming back, **first re-check Settings -> Agents -> Run Mode** and set it back to Allowlist (with Sandbox), then Cmd/Ctrl+Shift+P -> "Developer: Reload Window". Tell the user not to check that box on approval cards. See `BROWSER_SETUP.md` troubleshooting.
+
 > **Do not use "undetected" / anti-detection language when running the skills.** Cursor's classifier treats scraping-plus-anti-detection wording as evasion and blocks the run even with the allowlist in place. You don't need it: the CDP-to-real-Chrome hybrid (Step 2) already drives the user's genuine Chrome fingerprint - real plugins, WebGL, TLS, no `navigator.webdriver` - which is the real detection-risk reduction. Run a normal scrape/enrichment ("run my daily job search") and let the hybrid handle stealth.
 >
 > **Blunt alternative (zero prompts for everything):** if the user would rather not add individual allowlist entries, switch Run Mode to the fully-automatic "Auto" option (no classifier). This auto-approves every browser and shell action - but removes the guardrail for all agent actions, not just the skills. Use only if the surgical allowlist above is too much friction.
